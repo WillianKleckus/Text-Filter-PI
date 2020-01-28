@@ -1,152 +1,172 @@
 #include<iostream>
+#include<cstring>
 
-int inputedImg[4096][4096];
 
-float mask[9][9];
-
-int imgLines, imgColumns, maskNLines, maskNColumns;
-
-char header[5];
-int mediaImg[4096][4096];
-
-void getInputImg()
-{
-	//Ler imagem em imagem.ppm
-	char foto[100];
-	scanf("%s", &foto);
-	
-	FILE* file;
-	file = fopen(foto , "r");
-	
-	fscanf(file, "%s", header);
-	
-	//Pular linha:
-	char buffer[100];
-	fgets(buffer, 100, file);
-	char ignore[1024];
-	fgets(ignore, sizeof(ignore), file);
-	/////////////
-
-	fscanf(file, "%d", &imgLines);
-	fscanf(file, "%d", &imgColumns);
-	
-	std::cout << "Resolucao: " << imgLines << "x" << imgColumns << '\n';
-	
-	for(int line = 0; line < imgLines ; line++)
-	{
-		for(int column = 0; column < imgColumns; column++)
+class Image
+{	
+	private:
+		int** pixels;
+		int imageX, imageY;
+		
+		bool checkIfTouch(int x, int y) const
 		{
-			char inputChar;
-			fscanf(file, "%c", &inputChar);
-			if(inputChar == '1'){ inputedImg[line][column] = 1; } else if(inputChar == '0'){ inputedImg[line][column] = 0; }
-			else{ column--; }
-		}
-	}
-	
-	fclose(file);
-}
-
-void saveInputImg()
-{
-	FILE* input;
-	
-	input = fopen( "input.pbm" , "w+");
-	
-	fprintf(input, "P1\n#Feita por Willian Mota Oliveira, use GIMP para ver a foto.\n%d %d\n", imgLines, imgColumns);
-	
-	int endlIndex = 0;
-	for(int m = 0; m < imgLines ; m++)
-	{
-		for(int n = 0; n < imgColumns; n++)
-		{
-			if(endlIndex == 69){ fprintf(input, "%d\n", inputedImg[m][n]); endlIndex = 0;}
-			else{ fprintf(input, "%d", inputedImg[m][n]); endlIndex++;}
+			if(pixels[x][y] == 1 || pixels[x-1][y] == 1 || pixels[x][y-1] == 1 || pixels[x+1][y] == 1 || pixels[x][y+1] == 1){ return true; }
+			else { return false; }
 		}
 		
-	}
-	
-	fclose(input);
-	
-	std::cout << "Saved original!\n";
-}
-
-void saveOutputImg()
-{
-	FILE* output;
-	
-	output = fopen( "output.pbm" , "w+");
-	
-	fprintf(output, "P1\n#Feita por Willian Mota Oliveira, use GIMP para ver a foto.\n%d %d\n", imgLines, imgColumns);
-	
-	
-	int endlIndex = 0;
-	for(int line = 0; line < imgLines ; line++)
-	{
-		for(int column = 0; column < imgColumns; column++)
+		bool checkIfInside(int x, int y) const
 		{
-			if(endlIndex == 69){ fprintf(output, "%d\n", mediaImg[line][column]); endlIndex = 0;}
-			else{ fprintf(output, "%d", mediaImg[line][column]); endlIndex++;}
+			if(pixels[x][y] == 1 && pixels[x][y-1] == 1 && pixels[x][y+1] == 1 && pixels[x-1][y] == 1 && pixels[x+1][y] == 1){ return true; }
+			else { return false; }
 		}
 		
-	}
-	
-	fclose(output);
-	
-	std::cout << "Saved Modified!\n";
-}
-
-void setupMediaMask(int l, int c)
-{
-	maskNLines = l;
-	maskNColumns = c;
-	
-	for(int x = 0 ; x < l; x++)
-	{
-		for(int y = 0; y < c; y++)
+	public:
+		//constructor
+		Image()
 		{
-			mask[x][y] = 1.0/(l*c);
+			pixels = new int*[4096];
+			for(int i = 0; i < 4096; i++){ pixels[i] = new int[4096]; memset(pixels[i], 0, 4096);}
 		}
-	}
-}
-
-void fixSaltAndPepper()
-{
-	int paddingX = (maskNLines - 1)/2.0;
-	int paddingY = (maskNColumns - 1)/2.0;
-	float threshold = 0.5;
-	
-	for(int imgX = paddingX; imgX < imgLines - paddingX; imgX++)
-	{
-		for(int imgY = paddingY; imgY < imgColumns - paddingY; imgY++)
+		
+		//destructor
+		~Image()
 		{
-			float resultPixel = 0.0;
+			for(int i = 0; i < 4096; i++){ delete [] pixels[i]; }
+			delete [] pixels;
+		}
+		
+		Image& operator=(const Image& returned)
+		{
+			setImageSize(returned.imageX , returned.imageY);
 			
-			for(int maskX = 0; maskX < maskNLines ; maskX++)
+			for(int x = 0; x < imageX; x++)
 			{
-				for(int maskY = 0; maskY < maskNColumns; maskY++)
+				for(int y = 0; y < imageY; y++)
 				{
-					resultPixel += inputedImg[(imgX - paddingX) + maskX][(imgY - paddingY) + maskY] * mask[maskX][maskY];
+					setPixel(x,y, returned.getPixel(x,y));
+				}
+			}
+		}
+		
+		void setPixel(int x, int y , int value) { pixels[x][y] = value; }
+		
+		void setImageSize(int xSize, int ySize){ imageX = xSize; imageY = ySize; }
+		
+		int getPixel(int x, int y) const { return pixels[x][y]; }
+		
+		Image dilatateImage() const
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 2; x < imageX - 2; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					if(checkIfTouch(x,y)) { output.setPixel(x,y,1); }
+					else{ output.setPixel(x,y,0); }
 				}
 			}
 			
-			//std::cout << resultPixel << "\n";
-			
-			if(resultPixel > threshold){ mediaImg[imgX][imgY] = 1; } else if(resultPixel <= threshold) { mediaImg[imgX][imgY] = 0; }
-			
+			return output;
 		}
-	}
-}
+		
+		Image erodeImage() const
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 1; x < imageX - 1; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					if(checkIfInside(x,y)) { output.setPixel(x,y,1); }
+					else{ output.setPixel(x,y,0); }
+				}
+			}
+			
+			return output;
+		}
+		
+		void saveImage(char* name)
+		{
+			{
+				FILE* savingImg;
+				
+				savingImg = fopen( name , "w+");
+				
+				fprintf(savingImg , "P1\n#Feita por Willian Mota Oliveira, use GIMP para ver a foto.\n%d %d\n", imageX, imageY);
+				
+				int endlIndex = 0;
+				for(int line = 0; line < imageY ; line++)
+				{
+					for(int column = 0; column < imageX; column++)
+					{
+						if(endlIndex == 69){ fprintf(savingImg, "%d\n", pixels[column][line]); endlIndex = 0;}
+						else{ fprintf(savingImg, "%d", pixels[column][line]); endlIndex++;}
+					}
+					
+				}
+				
+				fclose(savingImg);
+				
+				std::cout << "Saved " << name << " \n";
+			}
+		}
+		
+		void loadImage(char* name)
+		{
+			//Ler imagem em imagem.ppm
+			FILE* file;
+			file = fopen(name , "r");
+			
+			char header[5];
+			fscanf(file, "%s", header);
+			
+			//Pular linha:
+			char buffer[100];
+			fgets(buffer, 100, file);
+			char ignore[1024];
+			fgets(ignore, sizeof(ignore), file);
+			/////////////
+		
+			fscanf(file, "%d", &imageX);
+			fscanf(file, "%d", &imageY);
+			
+			std::cout << "Resolucao: " << imageX << "x" << imageY << '\n';
+			
+			for(int line = 0; line < imageY ; line++)
+			{
+				for(int column = 0; column < imageX; column++)
+				{
+					char inputChar;
+					fscanf(file, "%c", &inputChar);
+					if(inputChar == '1'){ pixels[column][line] = 1; } else if(inputChar == '0'){ pixels[column][line] = 0; }
+					else{ column--; }
+				}
+			}
+			
+			fclose(file);
+		}
+};
 
 int main()
 {
-	getInputImg();
+	char nome[50];
+	scanf("%s", nome);
 	
-	setupMediaMask(3,3);
+	Image input;
+	input.loadImage(nome);
+	//input.saveImage("input image test.pbm");
 	
-	fixSaltAndPepper();
+	Image eroded = input.erodeImage();
+	eroded.saveImage("eroded image.pbm");
 	
-	saveInputImg();
-	saveOutputImg();
+	Image dilated = eroded.dilatateImage().dilatateImage();
+	dilated.saveImage("dilated image.pbm");
+	
+	
+	
 	return 0;
 }
 
