@@ -20,6 +20,24 @@ class Image
 			else { return false; }
 		}
 		
+		int getAveragePixel(int x,int y) const
+		{
+			int outputPixel = 0;
+			float averageCount = 0;
+			
+			for(int xIndex = x - 1; xIndex <= x + 1; xIndex++)
+			{
+				for(int yIndex = y; yIndex <= y + 1; yIndex++)
+				{
+					averageCount += getPixel(xIndex,yIndex);
+				}
+			}
+			averageCount = averageCount/9.0;
+			
+			if(averageCount >= 0.2){ return 1; }
+			else{ return 0; }
+		}
+		
 	public:
 		//constructor
 		Image()
@@ -82,6 +100,23 @@ class Image
 				{
 					if(checkIfInside(x,y)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
+				}
+			}
+			
+			return output;
+		}
+		
+		Image getAverageImage() const
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 1; x < imageX - 1; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					int average = getAveragePixel(x,y);
+					output.setPixel(x,y,average);
 				}
 			}
 			
@@ -159,10 +194,13 @@ int main()
 	input.loadImage(nome);
 	//input.saveImage("input image test.pbm");
 	
-	Image eroded = input.erodeImage();
+	Image average = input.getAverageImage();
+	average.saveImage("average image.pbm");
+	
+	Image eroded = average.erodeImage();
 	eroded.saveImage("eroded image.pbm");
 	
-	Image dilated = eroded.dilatateImage().dilatateImage();
+	Image dilated = eroded.dilatateImage();
 	dilated.saveImage("dilated image.pbm");
 	
 	
