@@ -1,5 +1,6 @@
 #include<iostream>
 #include<cstring>
+#include "mask.h"
 
 
 class Image
@@ -7,6 +8,7 @@ class Image
 	private:
 		int** pixels;
 		int imageX, imageY;
+		Mask crossMask;
 		
 		bool checkIfTouch(int x, int y) const
 		{
@@ -14,10 +16,36 @@ class Image
 			else { return false; }
 		}
 		
+		bool checkIfTouch(int xIndex, int yIndex, Mask mask) const
+		{
+			for(int x = 0; x < mask.getMaskSize(); x++)
+			{
+				for(int y = 0; y < mask.getMaskSize() ; y++)
+				{
+					if(mask.getMaskPixel(x,y) && getPixel((xIndex-1) + x ,(yIndex-1) + y))
+					return true;
+				}
+			}
+			return false;
+		}
+		
 		bool checkIfInside(int x, int y) const
 		{
 			if(pixels[x][y] == 1 && pixels[x][y-1] == 1 && pixels[x][y+1] == 1 && pixels[x-1][y] == 1 && pixels[x+1][y] == 1){ return true; }
 			else { return false; }
+		}
+		
+		bool checkIfInside(int xIndex, int yIndex, Mask mask) const
+		{
+			for(int x = 0; x < mask.getMaskSize(); x++)
+			{
+				for(int y = 0; y < mask.getMaskSize() ; y++)
+				{
+					if(mask.getMaskPixel(x,y) == 1 && getPixel((xIndex-1) + x ,(yIndex-1) + y) == 0){ return false; }
+				}
+			}
+			
+			return true;
 		}
 		
 		int getAveragePixel(int x,int y) const
@@ -44,6 +72,9 @@ class Image
 		{
 			pixels = new int*[4096];
 			for(int i = 0; i < 4096; i++){ pixels[i] = new int[4096]; memset(pixels[i], 0, 4096);}
+			
+			crossMask.setMaskSize(3);
+			crossMask.setCrossMask();
 		}
 		
 		//destructor
