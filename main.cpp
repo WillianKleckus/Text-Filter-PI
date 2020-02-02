@@ -137,8 +137,8 @@ class Image
 				{
 					for(int column = 0; column < imageX; column++)
 					{
-						if(endlIndex == 69){ fprintf(savingImg, "%d\n", pixels[column][line]); endlIndex = 0;}
-						else{ fprintf(savingImg, "%d", pixels[column][line]); endlIndex++;}
+						if(endlIndex == 69){ fprintf(savingImg, "%d\n", getPixel(column, line)); endlIndex = 0;}
+						else{ fprintf(savingImg, "%d", getPixel(column, line)); endlIndex++;}
 					}
 					
 				}
@@ -176,7 +176,7 @@ class Image
 				{
 					char inputChar;
 					fscanf(file, "%c", &inputChar);
-					if(inputChar == '1'){ pixels[column][line] = 1; } else if(inputChar == '0'){ pixels[column][line] = 0; }
+					if(inputChar == '1'){ setPixel(column, line, 1); } else if(inputChar == '0'){ setPixel(column, line, 0); }
 					else{ column--; }
 				}
 			}
