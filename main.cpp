@@ -47,13 +47,13 @@ class Image
 		int** pixels;
 		int imageX, imageY;
 		
-		/*bool checkIfTouch(int x, int y) const
+		bool checkIfTouch(int x, int y) const
 		{
 			if(pixels[x][y] == 1 || pixels[x-1][y] == 1 || pixels[x][y-1] == 1 || pixels[x+1][y] == 1 || pixels[x][y+1] == 1){ return true; }
 			else { return false; }
-		}*/
+		}
 		
-		bool checkIfTouch(int xIndex, int yIndex, Mask mask) const
+		/*bool checkIfTouch(int xIndex, int yIndex, Mask mask) const
 		{
 			for(int x = 0; x < mask.getMaskSize(); x++)
 			{
@@ -64,15 +64,15 @@ class Image
 				}
 			}
 			return false;
-		}
+		}*/
 		
-		/*bool checkIfInside(int x, int y) const
+		bool checkIfInside(int x, int y) const
 		{
 			if(pixels[x][y] == 1 && pixels[x][y-1] == 1 && pixels[x][y+1] == 1 && pixels[x-1][y] == 1 && pixels[x+1][y] == 1){ return true; }
 			else { return false; }
-		}*/
+		}
 		
-		bool checkIfInside(int xIndex, int yIndex, Mask mask) const
+		/*bool checkIfInside(int xIndex, int yIndex, Mask mask) const
 		{
 			int maskSize = mask.getMaskSize();
 			for(int x = 0; x < maskSize; x++)
@@ -83,7 +83,7 @@ class Image
 				}
 			}
 			return true;
-		}
+		}*/
 		
 		int getAveragePixel(int x,int y) const
 		{
@@ -146,7 +146,8 @@ class Image
 			{
 				for(int y = 1; y < imageY - 1; y++)
 				{	
-					if(checkIfTouch(x,y,mask)) { output.setPixel(x,y,1); }
+					if(checkIfTouch(x,y)) { output.setPixel(x,y,1); }
+					//if(checkIfTouch(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
 			}
@@ -159,14 +160,17 @@ class Image
 			Image output;
 			output.setImageSize(imageX, imageY);
 			
+			float percentage = 0.0;
+			
 			for(int x = 1; x < imageX - 1; x++)
 			{
+				percentage += 100.0/imageX;
 				for(int y = 1; y < imageY - 1; y++)
 				{	
-					if(checkIfInside(x,y,mask)) { output.setPixel(x,y,1); }
+					if(checkIfInside(x,y)) { output.setPixel(x,y,1); }
+					//if(checkIfInside(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
-				std::cout << x << " ";
 			}	
 			return output;
 		}
