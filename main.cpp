@@ -39,6 +39,17 @@ class Mask{
 			}
 		}
 		
+		void setFullMask()
+		{	
+			for(int y = 0; y < maskSize; y++)
+			{
+				for(int x = 0; x < maskSize; x++)
+				{
+					pixel[x][y] = 1;
+				}
+			}
+		}
+		
 };
 
 class Image
@@ -53,6 +64,7 @@ class Image
 			else { return false; }
 		}
 		
+		//Por questões de otimização, está sendo usado o código acima.
 		/*bool checkIfTouch(int xIndex, int yIndex, Mask mask) const
 		{
 			for(int x = 0; x < mask.getMaskSize(); x++)
@@ -72,6 +84,7 @@ class Image
 			else { return false; }
 		}
 		
+		//Por questões de otimização, está sendo usado o código acima.
 		/*bool checkIfInside(int xIndex, int yIndex, Mask mask) const
 		{
 			int maskSize = mask.getMaskSize();
@@ -101,6 +114,22 @@ class Image
 			
 			if(averageCount >= 0.2){ return 1; }
 			else{ return 0; }
+		}
+		
+		Image getDiff(Image img) const
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 1; x < imageX; x++)
+			{
+				for(int y = 1; y < imageY; y++)
+				{
+					if(getPixel(x,y) == 1 && img.getPixel(x,y) == 1 ) { output.setPixel(x,y,0); }
+					else { output.setPixel(x,y, getPixel(x,y)); }
+				}
+			}
+			return output;
 		}
 		
 	public:
@@ -137,16 +166,21 @@ class Image
 		
 		int getPixel(int x, int y) const { return pixels[x][y]; }
 		
-		Image dilatateImage(Mask mask) const
+		Image dilatateImage() const
 		{
 			Image output;
 			output.setImageSize(imageX, imageY);
+			
+			Mask mask;
+			mask.setMaskSize(3);
+			mask.setCrossMask();
 			
 			for(int x = 1; x < imageX - 1; x++)
 			{
 				for(int y = 1; y < imageY - 1; y++)
 				{	
 					if(checkIfTouch(x,y)) { output.setPixel(x,y,1); }
+					//Futura Organização
 					//if(checkIfTouch(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
@@ -155,10 +189,14 @@ class Image
 			return output;
 		}
 		
-		Image erodeImage(Mask mask) const
+		Image erodeImage() const
 		{
 			Image output;
 			output.setImageSize(imageX, imageY);
+			
+			Mask mask;
+			mask.setMaskSize(3);
+			mask.setCrossMask();
 			
 			float percentage = 0.0;
 			
@@ -168,6 +206,7 @@ class Image
 				for(int y = 1; y < imageY - 1; y++)
 				{	
 					if(checkIfInside(x,y)) { output.setPixel(x,y,1); }
+					//Futura Organização
 					//if(checkIfInside(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
@@ -188,6 +227,33 @@ class Image
 					output.setPixel(x,y,average);
 				}
 			}
+			
+			return output;
+		}
+		
+		Image getInternalGradient() const
+		{	
+			//Futura Organização
+			//Mask gradientMask;
+			//gradientMask.setMaskSize(3);
+			//gradientMask.setFullMask();
+			
+			Image temp = erodeImage();
+			Image output = getDiff(temp);
+			output.saveImage("Wtf is happening.pbm");
+			
+			return output;
+		}
+		
+		Image getExternalGradient() const
+		{
+			//Futura organização
+			//Mask gradientMask;
+			//gradientMask.setMaskSize(3);
+			//gradientMask.setFullMask();
+			
+			Image temp = dilatateImage();
+			Image output = temp.getDiff(temp.erodeImage());
 			
 			return output;
 		}
@@ -220,7 +286,7 @@ class Image
 		
 		void loadImage(char* name)
 		{
-			//Ler imagem em imagem.ppm
+			//Ler imagem em imagem.pbm
 			FILE* file;
 			file = fopen(name , "r");
 			
@@ -259,24 +325,17 @@ int main()
 	char nome[50];
 	scanf("%s", nome);
 	
-	Mask mask;
-	mask.setMaskSize(3);
-	mask.setCrossMask();
-	
 	Image input;
 	input.loadImage(nome);
-	//input.saveImage("input image test.pbm");
 	
-	Image average = input.getAverageImage();
-	average.saveImage("average image.pbm");
+	Image filteredImage = input.erodeImage().dilatateImage().dilatateImage().erodeImage().dilatateImage();
+	filteredImage.saveImage("Filtered.pbm");
 	
-	Image eroded = average.erodeImage(mask);
-	eroded.saveImage("eroded image.pbm");
+	Image internalGradient = filteredImage.getInternalGradient();
+	internalGradient.saveImage("InternalGradient.pbm");
 	
-	Image dilated = eroded.dilatateImage(mask);
-	dilated.saveImage("dilated image.pbm");
-	
-	
+	Image externalGradient = filteredImage.getExternalGradient();
+	externalGradient.saveImage("ExternalGradient.pbm");
 	
 	return 0;
 }
