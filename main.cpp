@@ -118,6 +118,10 @@ class Image
 		
 		Image getDiff(Image img) const
 		{
+			{
+				Image teste;
+			}
+			
 			Image output;
 			output.setImageSize(imageX, imageY);
 			
@@ -138,6 +142,13 @@ class Image
 		{
 			pixels = new int*[4096];
 			for(int i = 0; i < 4096; i++){ pixels[i] = new int[4096]; memset(pixels[i], 0, 4096);}
+		}
+		
+		//copy constructor
+		Image(const Image& i)
+		: Image()
+		{ 	
+			*this = i;
 		}
 		
 		//destructor
@@ -240,7 +251,7 @@ class Image
 			
 			Image temp = erodeImage();
 			Image output = getDiff(temp);
-			output.saveImage("Wtf is happening.pbm");
+			//output.saveImage("Wtf is happening.pbm");
 			
 			return output;
 		}
