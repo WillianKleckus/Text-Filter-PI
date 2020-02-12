@@ -136,6 +136,20 @@ class Image
 			return output;
 		}
 		
+		Image merge(Image img)
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 1; x < imageX - 1; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					if(img.getPixel(x,y) == 1){ setPixel(x,y,1); }
+				}
+			}
+		}
+		
 	public:
 		//constructor
 		Image()
@@ -267,6 +281,24 @@ class Image
 			Image output = temp.getDiff(temp.erodeImage());
 			
 			return output;
+		}
+		
+		Image highlightWords()
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			bool lineFound = false;
+			for(int x = 1; x < imageX - 1; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					if(getPixel(x,y) == 1)
+					{
+						output.merge(foundWord(x,y));
+					}
+				}
+			}
 		}
 		
 		void saveImage(char* name)
