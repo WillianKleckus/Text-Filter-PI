@@ -1,6 +1,11 @@
 #include<iostream>
 #include<cstring>
 
+class Word{
+	public:
+	int initialXPos, initialYPos, endXPos, endYPos;
+};
+
 class Mask{
 	private:
 		int maskSize = 0;
@@ -150,6 +155,47 @@ class Image
 			}
 		}
 		
+		Word foundWord(int xStart, int yStart)
+		{
+			Word output;
+			output.initialXPos = xStart;
+			output.initialYPos = yStart;
+			output.endXPos = xStart;
+			output.endYPos = yStart;
+			
+			for(int x = xStart; x < imageX ; x++)
+			{
+				bool foundEnd = true;
+				
+				for(int y = yStart; y <= 30; y++)
+				{
+					if(getPixel(x, y) == 1)
+					{ 
+						foundEnd = false;
+						if(x >= output.endXPos){ output.endXPos = x; }
+						if(y >= output.endYPos){ output.endYPos = y; }
+					}
+					
+				}
+				if(foundEnd){ break; }
+			}
+			
+			return output;
+		}
+		
+		Image drawWordHighlight(Word word)
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int index = word.initialXPos; index <= word.endXPos ; index++){ output.setPixel(index, word.initialYPos ,1); }
+			for(int index = word.initialXPos; index <= word.endXPos ; index++){ output.setPixel(index, word.endYPos ,1); }
+			for(int index = word.initialYPos; index <= word.endYPos ; index++){ output.setPixel(word.initialXPos, index ,1); }
+			for(int index = word.initialYPos; index <= word.endYPos ; index++){ output.setPixel(word.endXPos, index ,1); }	
+			
+			return output;
+		}
+		
 	public:
 		//constructor
 		Image()
@@ -288,17 +334,30 @@ class Image
 			Image output;
 			output.setImageSize(imageX, imageY);
 			
+			Word arrayOfWords[500];
+			int numberOfWords = 0;
+			
 			bool lineFound = false;
-			for(int x = 1; x < imageX - 1; x++)
+			for(int y = 1; y < imageY - 1; y++)
 			{
-				for(int y = 1; y < imageY - 1; y++)
+				for(int x = 1; x < imageX - 1; x++)
 				{
 					if(getPixel(x,y) == 1)
 					{
-						output.merge(foundWord(x,y));
+						std::cout << "Here!" << y;
+						
+						Word word = foundWord(x,y);
+						y = word.endYPos;
+						
+						arrayOfWords[numberOfWords] = word;
+						numberOfWords++;
 					}
 				}
 			}
+			
+			for(int i = 0; i < numberOfWords; i++){ output.merge( drawWordHighlight(arrayOfWords[i]) ); }
+			
+			return output;
 		}
 		
 		void saveImage(char* name)
@@ -374,11 +433,8 @@ int main()
 	Image filteredImage = input.erodeImage().dilatateImage().dilatateImage().erodeImage().dilatateImage();
 	filteredImage.saveImage("Filtered.pbm");
 	
-	Image internalGradient = filteredImage.getInternalGradient();
-	internalGradient.saveImage("InternalGradient.pbm");
-	
-	Image externalGradient = filteredImage.getExternalGradient();
-	externalGradient.saveImage("ExternalGradient.pbm");
+	Image highlights = filteredImage.highlightWords();
+	highlights.saveImage("Highlights.pbm");
 	
 	return 0;
 }
