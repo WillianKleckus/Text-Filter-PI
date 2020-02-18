@@ -1,9 +1,19 @@
 #include<iostream>
 #include<cstring>
 
+class Letter{
+	public:
+		int start, end;
+};
+
 class Word{
 	public:
-	int initialXPos, initialYPos, endXPos, endYPos;
+		int start, end;
+};
+
+class Line{
+	public:
+		int ceiling, floor;
 };
 
 class Mask{
@@ -69,7 +79,7 @@ class Image
 			else { return false; }
 		}
 		
-		//Por questões de otimização, está sendo usado o código acima.
+		//For optimization purposes, commented
 		/*bool checkIfTouch(int xIndex, int yIndex, Mask mask) const
 		{
 			for(int x = 0; x < mask.getMaskSize(); x++)
@@ -89,7 +99,7 @@ class Image
 			else { return false; }
 		}
 		
-		//Por questões de otimização, está sendo usado o código acima.
+		//For optimization purposes, commented
 		/*bool checkIfInside(int xIndex, int yIndex, Mask mask) const
 		{
 			int maskSize = mask.getMaskSize();
@@ -105,7 +115,6 @@ class Image
 		
 		int getAveragePixel(int x,int y) const
 		{
-			int outputPixel = 0;
 			float averageCount = 0;
 			
 			for(int xIndex = x - 1; xIndex <= x + 1; xIndex++)
@@ -141,79 +150,40 @@ class Image
 			return output;
 		}
 		
-		Image merge(Image img)
+		void drawHighlight(int start, int end, Line line)
 		{
-			Image output;
-			output.setImageSize(imageX, imageY);
 			
-			for(int x = 1; x < imageX - 1; x++)
-			{
-				for(int y = 1; y < imageY - 1; y++)
-				{
-					if(img.getPixel(x,y) == 1){ setPixel(x,y,1); }
-				}
-			}
-		}
-		
-		Word foundWord(int xStart, int yStart)
-		{
-			Word output;
-			output.initialXPos = xStart;
-			output.initialYPos = yStart;
-			output.endXPos = xStart;
-			output.endYPos = yStart;
+			for(int index = start; index <= end ; index++){ setPixel(index, line.ceiling ,1); }
+			for(int index = start; index <= end ; index++){ setPixel(index, line.floor ,1); }
+			for(int index = line.ceiling ; index <= line.floor ; index++){ setPixel(start , index ,1); }
+			for(int index = line.ceiling ; index <= line.floor ; index++){ setPixel(end, index ,1); }	
 			
-			for(int x = xStart; x < imageX ; x++)
-			{
-				bool foundEnd = true;
-				
-				for(int y = yStart; y <= 30; y++)
-				{
-					if(getPixel(x, y) == 1)
-					{ 
-						foundEnd = false;
-						if(x >= output.endXPos){ output.endXPos = x; }
-						if(y >= output.endYPos){ output.endYPos = y; }
-					}
-					
-				}
-				if(foundEnd){ break; }
-			}
+			//std::cout << "XInit " << start << " XEnd " << end << " YInit " << line.ceiling << " YEnd " << line.floor << '\n';
 			
-			return output;
-		}
-		
-		Image drawWordHighlight(Word word)
-		{
-			Image output;
-			output.setImageSize(imageX, imageY);
-			
-			for(int index = word.initialXPos; index <= word.endXPos ; index++){ output.setPixel(index, word.initialYPos ,1); }
-			for(int index = word.initialXPos; index <= word.endXPos ; index++){ output.setPixel(index, word.endYPos ,1); }
-			for(int index = word.initialYPos; index <= word.endYPos ; index++){ output.setPixel(word.initialXPos, index ,1); }
-			for(int index = word.initialYPos; index <= word.endYPos ; index++){ output.setPixel(word.endXPos, index ,1); }	
-			
-			return output;
 		}
 		
 	public:
 		//constructor
 		Image()
 		{
+			//std::cout << "Constructing " << this << '\n';
 			pixels = new int*[4096];
-			for(int i = 0; i < 4096; i++){ pixels[i] = new int[4096]; memset(pixels[i], 0, 4096);}
+			for(int i = 0; i < 4096; i++){ pixels[i] = new int[4096]; memset(pixels[i], 0, 4096*sizeof(int));}
 		}
 		
 		//copy constructor
 		Image(const Image& i)
 		: Image()
 		{ 	
+			//std::cout << "Constructing cpy " << this << '\n';
+			
 			*this = i;
 		}
 		
 		//destructor
 		~Image()
 		{
+			//std::cout << "Destructing " << this << '\n';
 			for(int i = 0; i < 4096; i++){ delete [] pixels[i]; }
 			delete [] pixels;
 		}
@@ -229,6 +199,8 @@ class Image
 					setPixel(x,y, returned.getPixel(x,y));
 				}
 			}
+			
+			return *this;
 		}
 		
 		void setPixel(int x, int y , int value) { pixels[x][y] = value; }
@@ -251,7 +223,7 @@ class Image
 				for(int y = 1; y < imageY - 1; y++)
 				{	
 					if(checkIfTouch(x,y)) { output.setPixel(x,y,1); }
-					//Futura Organização
+					//For optimization purposes, commented
 					//if(checkIfTouch(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
@@ -277,7 +249,7 @@ class Image
 				for(int y = 1; y < imageY - 1; y++)
 				{	
 					if(checkIfInside(x,y)) { output.setPixel(x,y,1); }
-					//Futura Organização
+					//For optimization purposes, commented
 					//if(checkIfInside(x,y,mask)) { output.setPixel(x,y,1); }
 					else{ output.setPixel(x,y,0); }
 				}
@@ -304,21 +276,20 @@ class Image
 		
 		Image getInternalGradient() const
 		{	
-			//Futura Organização
+			//For optimization purposes, commented
 			//Mask gradientMask;
 			//gradientMask.setMaskSize(3);
 			//gradientMask.setFullMask();
 			
 			Image temp = erodeImage();
 			Image output = getDiff(temp);
-			//output.saveImage("Wtf is happening.pbm");
 			
 			return output;
 		}
 		
 		Image getExternalGradient() const
 		{
-			//Futura organização
+			//For optimization purposes, commented
 			//Mask gradientMask;
 			//gradientMask.setMaskSize(3);
 			//gradientMask.setFullMask();
@@ -329,33 +300,137 @@ class Image
 			return output;
 		}
 		
-		Image highlightWords()
+		Image highlight()
 		{
 			Image output;
 			output.setImageSize(imageX, imageY);
 			
-			Word arrayOfWords[500];
+			Line arrayOfLines[2048];
+			int numberOfLines = 0;
+			
+			Letter arrayOfLetters[4096];
+			int numberOfLetters = 0;
+			
+			Word arrayOfWords[4096];
 			int numberOfWords = 0;
 			
-			bool lineFound = false;
+			bool inLine = false;
 			for(int y = 1; y < imageY - 1; y++)
 			{
+				bool foundSmth = false;
+				
 				for(int x = 1; x < imageX - 1; x++)
+				{	
+					if(getPixel(x,y) == 1) { foundSmth = true; }
+				}
+				
+				if(foundSmth && !inLine)
 				{
-					if(getPixel(x,y) == 1)
-					{
-						std::cout << "Here!" << y;
-						
-						Word word = foundWord(x,y);
-						y = word.endYPos;
-						
-						arrayOfWords[numberOfWords] = word;
-						numberOfWords++;
-					}
+					inLine = true;
+					arrayOfLines[numberOfLines].ceiling = y;
+				}
+				
+				if(!foundSmth && inLine)
+				{
+					inLine = false;
+					arrayOfLines[numberOfLines].floor = y;
+					numberOfLines++;
 				}
 			}
 			
-			for(int i = 0; i < numberOfWords; i++){ output.merge( drawWordHighlight(arrayOfWords[i]) ); }
+			std::cout << "Number of lines: " << numberOfLines << '\n';
+			
+			for(int nLine = 0; nLine < numberOfLines; nLine++)
+			{
+				//std::cout << "Ceiling " << arrayOfLines[nLine].ceiling << " Floor " << arrayOfLines[nLine].floor << '\n';
+				
+				//Resetting array for each line
+				for(int i = 0; i < numberOfLetters ; i++){ arrayOfLetters[i].start = 0; arrayOfLetters[i].start = 0; }
+				numberOfLetters = 0;
+				
+				for(int i = 0; i < numberOfWords ; i++){ arrayOfWords[i].start = 0; arrayOfWords[i].start = 0; }
+				numberOfWords = 0;
+				
+				bool inLetter = false;
+				for(int x = 1; x < imageX; x++)
+				{
+					bool foundSmth = false;
+					for(int y = arrayOfLines[nLine].ceiling ; y <= arrayOfLines[nLine].floor ; y++)
+					{
+						if(getPixel(x,y) == 1) { foundSmth = true; }
+					}
+					
+					if(foundSmth && !inLetter)
+					{
+						inLetter = true;
+						arrayOfLetters[numberOfLetters].start = x;
+					}						
+		
+					if(!foundSmth && inLetter)
+					{
+						inLetter = false;
+						arrayOfLetters[numberOfLetters].end = x;
+						numberOfLetters++;
+					}
+				}
+				
+				//Draw highlight of letters:
+				/*for(int letterIndex = 0; letterIndex < numberOfLetters; letterIndex++)
+				{
+					output.drawHighlight(arrayOfLetters[letterIndex].start, arrayOfLetters[letterIndex].end, arrayOfLines[nLine]);
+				}*/
+				
+				//Draw highlight of words:
+				bool inWord = false;
+				Word word;
+				for(int letterIndex = 0; letterIndex < numberOfLetters - 1; letterIndex++)
+				{
+					int distance =  arrayOfLetters[letterIndex+1].start - arrayOfLetters[letterIndex].end;
+					
+					
+					if(!inWord)
+					{
+						word.start = arrayOfLetters[letterIndex].start;
+						inWord = true;
+					}
+					if(distance >= 6)
+					{
+						word.end = arrayOfLetters[letterIndex].end;
+						arrayOfWords[numberOfWords] = word;
+						numberOfWords++;
+						inWord = false;
+					}
+					
+					if(letterIndex == (numberOfLetters - 2))
+					{
+						//std::cout << "Passed here\n";
+						word.end = arrayOfLetters[letterIndex + 1].end;
+						arrayOfWords[numberOfWords] = word;
+						numberOfWords++;
+						inWord = false;
+					}
+				}
+				for(int wordIndex = 0; wordIndex < numberOfWords; wordIndex++)
+				{
+					output.drawHighlight(arrayOfWords[wordIndex].start, arrayOfWords[wordIndex].end, arrayOfLines[nLine]);
+				}
+			}
+			
+			return output;
+		}
+		
+		Image merge(Image img)
+		{
+			Image output;
+			output.setImageSize(imageX, imageY);
+			
+			for(int x = 1; x < imageX - 1; x++)
+			{
+				for(int y = 1; y < imageY - 1; y++)
+				{
+					if(img.getPixel(x,y) == 1){ setPixel(x,y,1); }
+				}
+			}
 			
 			return output;
 		}
@@ -405,7 +480,7 @@ class Image
 			fscanf(file, "%d", &imageX);
 			fscanf(file, "%d", &imageY);
 			
-			std::cout << "Resolucao: " << imageX << "x" << imageY << '\n';
+			std::cout << "Image res: " << imageX << "x" << imageY << '\n';
 			
 			for(int line = 0; line < imageY ; line++)
 			{
@@ -433,8 +508,12 @@ int main()
 	Image filteredImage = input.erodeImage().dilatateImage().dilatateImage().erodeImage().dilatateImage();
 	filteredImage.saveImage("Filtered.pbm");
 	
-	Image highlights = filteredImage.highlightWords();
+	Image highlights = filteredImage.erodeImage().highlight();
 	highlights.saveImage("Highlights.pbm");
+	
+	Image allInOne = filteredImage;
+	allInOne.merge(highlights);
+	allInOne.saveImage("The End!.pbm");
 	
 	return 0;
 }
