@@ -310,9 +310,11 @@ class Image
 			
 			Letter arrayOfLetters[4096];
 			int numberOfLetters = 0;
+			int totalNumberOfLetters = 0;
 			
 			Word arrayOfWords[4096];
 			int numberOfWords = 0;
+			int totalNumberOfWords = 0;
 			
 			bool inLine = false;
 			for(int y = 1; y < imageY - 1; y++)
@@ -337,8 +339,6 @@ class Image
 					numberOfLines++;
 				}
 			}
-			
-			std::cout << "Number of lines: " << numberOfLines << '\n';
 			
 			for(int nLine = 0; nLine < numberOfLines; nLine++)
 			{
@@ -414,7 +414,12 @@ class Image
 				{
 					output.drawHighlight(arrayOfWords[wordIndex].start, arrayOfWords[wordIndex].end, arrayOfLines[nLine]);
 				}
+				
+				totalNumberOfWords += numberOfWords;
+				totalNumberOfLetters += numberOfLetters;
 			}
+			
+			std:: cout << "Number of lines: " << numberOfLines << "\nNumber of words: " << totalNumberOfWords << "\nNumber of letters: " << totalNumberOfLetters << '\n';
 			
 			return output;
 		}
@@ -506,10 +511,13 @@ int main()
 	input.loadImage(nome);
 	
 	Image filteredImage = input.erodeImage().dilatateImage().dilatateImage().erodeImage().dilatateImage();
-	filteredImage.saveImage("Filtered.pbm");
+	//filteredImage.saveImage("Filtered.pbm");
+	
+	//Image filteredImage = input.getAverageImage();
+	//filteredImage.saveImage("Filtered.pbm");
 	
 	Image highlights = filteredImage.erodeImage().highlight();
-	highlights.saveImage("Highlights.pbm");
+	//highlights.saveImage("Highlights.pbm");
 	
 	Image allInOne = filteredImage;
 	allInOne.merge(highlights);
