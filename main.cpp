@@ -511,17 +511,17 @@ int main()
 	input.loadImage(nome);
 	
 	Image filteredImage = input.erodeImage().dilatateImage().dilatateImage().erodeImage().dilatateImage();
-	//filteredImage.saveImage("Filtered.pbm");
+	filteredImage.saveImage("Filtered.pbm");
 	
 	//Image filteredImage = input.getAverageImage();
 	//filteredImage.saveImage("Filtered.pbm");
 	
-	Image highlights = filteredImage.erodeImage().highlight();
+	//Image highlights = filteredImage.erodeImage().highlight();
 	//highlights.saveImage("Highlights.pbm");
 	
-	Image allInOne = filteredImage;
-	allInOne.merge(highlights);
-	allInOne.saveImage("The End!.pbm");
+	//Image allInOne = filteredImage;
+	//allInOne.merge(highlights);
+	//allInOne.saveImage("The End!.pbm");
 	
 	return 0;
 }
